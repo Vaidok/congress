@@ -12,6 +12,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.ClipboardManager;
 import android.text.format.Time;
+import android.text.util.Linkify;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -19,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -155,14 +157,16 @@ public class LegislatorTwitter extends ListActivity {
     
     protected class TweetAdapter extends ArrayAdapter<Status> {
     	LayoutInflater inflater;
+    	Activity context;
 
         public TweetAdapter(Activity context, List<Status> tweets) {
         	super(context, 0, tweets);
+        	this.context=context;
             inflater = LayoutInflater.from(context);
         }
 
-		public View getView(int position, View convertView, ViewGroup parent) {
-			LinearLayout view;
+		public View getView(final int position, View convertView, ViewGroup parent) {
+			final LinearLayout view;
 			if (convertView == null)
 				view = (LinearLayout) inflater.inflate(R.layout.tweet, null); 
 			else
@@ -170,9 +174,27 @@ public class LegislatorTwitter extends ListActivity {
 			
 			Status tweet = getItem(position);
 			((TextView) view.findViewById(R.id.tweet_text)).setText(tweet.text);
-			((TextView) view.findViewById(R.id.tweet_byline))
-				.setText("posted " + timeAgoInWords(tweet.createdAt.getTime()) + " by @" + tweet.user.screenName);
-			
+			if(Linkify.addLinks(((TextView) view.findViewById(R.id.tweet_text)),Linkify.ALL)){
+				((TextView) view.findViewById(R.id.tweet_text)).setOnClickListener(new OnClickListener(){
+					@Override
+					public void onClick(View v) {
+						((LegislatorTwitter) context).getListView().performItemClick(v,position,1);
+					}
+				});
+				((TextView) view.findViewById(R.id.tweet_byline)).setText("posted " + timeAgoInWords(tweet.createdAt.getTime()) + " by @" + tweet.user.screenName);
+				((TextView) view.findViewById(R.id.tweet_byline)).setOnClickListener(new OnClickListener(){
+					@Override
+					public void onClick(View v) {
+						LegislatorTwitter lT=(LegislatorTwitter) context;
+						lT.getListView().performItemClick(view,position,1);
+					}
+						
+				});
+				}
+				else{
+					((TextView) view.findViewById(R.id.tweet_byline))
+					.setText("posted " + timeAgoInWords(tweet.createdAt.getTime()) + " by @" + tweet.user.screenName);
+				}
 			return view;
 		}
 		
